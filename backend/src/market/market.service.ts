@@ -19,7 +19,12 @@ export class MarketService {
   private broadcaster: IMarketBroadcaster | null = null;
   private isInitialized = false;
 
-  private defaultSymbols = ['RELIANCE', 'HDFCBANK', 'TCS', 'INFY', 'TATAMOTORS', 'NIFTY50'];
+  private defaultSymbols = [
+    'RELIANCE', 'HDFCBANK', 'TCS', 'INFY', 'ICICIBANK', 'SBIN', 'BHARTIARTL', 'ITC',
+    'HINDUNILVR', 'LT', 'BAJFINANCE', 'MARUTI', 'SUNPHARMA', 'KOTAKBANK', 'AXISBANK',
+    'TITAN', 'ADANIENT', 'ADANIPORTS', 'WIPRO', 'HCLTECH', 'ASIANPAINT', 'NTPC',
+    'POWERGRID', 'TATASTEEL', 'TATAMOTORS', 'NIFTY50', 'BANKNIFTY'
+  ];
 
   constructor(
     provider?: IMarketDataProvider,
@@ -63,6 +68,14 @@ export class MarketService {
     };
   }
 
+  public async ensureSymbol(symbol: string): Promise<void> {
+    const cleanSymbol = symbol.toUpperCase().trim();
+    if (!this.storage.getQuote(cleanSymbol)) {
+      const key = symbolRegistry.resolveKey(cleanSymbol);
+      await this.provider.subscribe([key], 'full');
+    }
+  }
+
   public getQuote(symbolOrKey: string): MarketQuote | undefined {
     return this.storage.getQuote(symbolOrKey);
   }
@@ -72,8 +85,8 @@ export class MarketService {
   }
 
   public getComprehensive(symbol: string): ComprehensiveEquityData | undefined {
-    if (this.provider instanceof HardcodedMarketProvider) {
-      return this.provider.getComprehensiveData(symbol);
+    if (typeof (this.provider as any).getComprehensiveData === 'function') {
+      return (this.provider as any).getComprehensiveData(symbol);
     }
     return undefined;
   }

@@ -85,6 +85,134 @@ class SymbolRegistry {
         tickSize: 0.05
       },
       {
+        symbol: 'HINDUNILVR',
+        name: 'Hindustan Unilever Ltd.',
+        instrumentKey: 'NSE_EQ|INE030A01027',
+        exchange: 'NSE_EQ',
+        lotSize: 1,
+        tickSize: 0.05
+      },
+      {
+        symbol: 'LT',
+        name: 'Larsen & Toubro Ltd.',
+        instrumentKey: 'NSE_EQ|INE018A01030',
+        exchange: 'NSE_EQ',
+        lotSize: 1,
+        tickSize: 0.05
+      },
+      {
+        symbol: 'BAJFINANCE',
+        name: 'Bajaj Finance Ltd.',
+        instrumentKey: 'NSE_EQ|INE296A01024',
+        exchange: 'NSE_EQ',
+        lotSize: 1,
+        tickSize: 0.05
+      },
+      {
+        symbol: 'MARUTI',
+        name: 'Maruti Suzuki India Ltd.',
+        instrumentKey: 'NSE_EQ|INE585B01010',
+        exchange: 'NSE_EQ',
+        lotSize: 1,
+        tickSize: 0.05
+      },
+      {
+        symbol: 'SUNPHARMA',
+        name: 'Sun Pharmaceutical Industries Ltd.',
+        instrumentKey: 'NSE_EQ|INE044A01036',
+        exchange: 'NSE_EQ',
+        lotSize: 1,
+        tickSize: 0.05
+      },
+      {
+        symbol: 'KOTAKBANK',
+        name: 'Kotak Mahindra Bank Ltd.',
+        instrumentKey: 'NSE_EQ|INE237A01028',
+        exchange: 'NSE_EQ',
+        lotSize: 1,
+        tickSize: 0.05
+      },
+      {
+        symbol: 'AXISBANK',
+        name: 'Axis Bank Ltd.',
+        instrumentKey: 'NSE_EQ|INE238A01034',
+        exchange: 'NSE_EQ',
+        lotSize: 1,
+        tickSize: 0.05
+      },
+      {
+        symbol: 'TITAN',
+        name: 'Titan Company Ltd.',
+        instrumentKey: 'NSE_EQ|INE280A01028',
+        exchange: 'NSE_EQ',
+        lotSize: 1,
+        tickSize: 0.05
+      },
+      {
+        symbol: 'ADANIENT',
+        name: 'Adani Enterprises Ltd.',
+        instrumentKey: 'NSE_EQ|INE423A01024',
+        exchange: 'NSE_EQ',
+        lotSize: 1,
+        tickSize: 0.05
+      },
+      {
+        symbol: 'ADANIPORTS',
+        name: 'Adani Ports & SEZ Ltd.',
+        instrumentKey: 'NSE_EQ|INE742F01042',
+        exchange: 'NSE_EQ',
+        lotSize: 1,
+        tickSize: 0.05
+      },
+      {
+        symbol: 'WIPRO',
+        name: 'Wipro Ltd.',
+        instrumentKey: 'NSE_EQ|INE075A01022',
+        exchange: 'NSE_EQ',
+        lotSize: 1,
+        tickSize: 0.05
+      },
+      {
+        symbol: 'HCLTECH',
+        name: 'HCL Technologies Ltd.',
+        instrumentKey: 'NSE_EQ|INE860A01027',
+        exchange: 'NSE_EQ',
+        lotSize: 1,
+        tickSize: 0.05
+      },
+      {
+        symbol: 'ASIANPAINT',
+        name: 'Asian Paints Ltd.',
+        instrumentKey: 'NSE_EQ|INE021A01026',
+        exchange: 'NSE_EQ',
+        lotSize: 1,
+        tickSize: 0.05
+      },
+      {
+        symbol: 'NTPC',
+        name: 'NTPC Ltd.',
+        instrumentKey: 'NSE_EQ|INE733E01010',
+        exchange: 'NSE_EQ',
+        lotSize: 1,
+        tickSize: 0.05
+      },
+      {
+        symbol: 'POWERGRID',
+        name: 'Power Grid Corp. of India Ltd.',
+        instrumentKey: 'NSE_EQ|INE752E01010',
+        exchange: 'NSE_EQ',
+        lotSize: 1,
+        tickSize: 0.05
+      },
+      {
+        symbol: 'TATASTEEL',
+        name: 'Tata Steel Ltd.',
+        instrumentKey: 'NSE_EQ|INE081A01020',
+        exchange: 'NSE_EQ',
+        lotSize: 1,
+        tickSize: 0.05
+      },
+      {
         symbol: 'TATAMOTORS',
         name: 'Tata Motors Ltd.',
         instrumentKey: 'NSE_EQ|INE155A01022',
@@ -134,7 +262,17 @@ class SymbolRegistry {
     if (this.symbolToInfo.has(upper)) {
       return this.symbolToInfo.get(upper)!.instrumentKey;
     }
-    return identifier; // Assuming it's already an instrument key
+    // Dynamically register any new symbol on the fly
+    const dynamicKey = `NSE_EQ|${upper}`;
+    this.register({
+      symbol: upper,
+      name: `${upper} Equity`,
+      instrumentKey: dynamicKey,
+      exchange: 'NSE_EQ',
+      lotSize: 1,
+      tickSize: 0.05
+    });
+    return dynamicKey;
   }
 
   public resolveSymbol(instrumentKeyOrSymbol: string): string {
