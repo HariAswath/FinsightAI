@@ -1,924 +1,359 @@
-# FinsightAI — Autonomous Multi-Agent Financial Intelligence Platform
-> **From Market Data to Personalized Intelligence**
+# FinsightAI
 
-FinsightAI is an autonomous AI-powered financial intelligence platform for retail investors. It combines live market data, specialized AI agents, RAG-enhanced fundamental analysis, sentiment analysis, portfolio risk, and user personalization to turn raw market information into explainable, context-aware investment intelligence.
+> Autonomous Multi-Agent Financial Intelligence Platform for Indian Equities
 
-> ⚠️ **Disclaimer:** FinsightAI is an educational and informational demonstration, not financial advice. AI-generated analysis may contain errors, data degradation, signal conflicts, or model hallucinations. Investment decisions should be independently verified.
+FinsightAI is an autonomous financial intelligence platform tailored for Indian capital markets. It bridges real-time National Stock Exchange (NSE) market data with parallel, specialized AI agents across fundamentals, technical indicators, and market sentiment. By decoupling market analysis from investor personalization, FinsightAI delivers context-aware, audit-grounded recommendations calibrated to individual risk profiles.
+
 ---
-## ✨ Why FinsightAI?
-Traditional investment platforms often show the same market signals to every investor. FinsightAI separates the **market view** from the **personalized decision**:
 
-**Same stock + same market data + different user context = different decision**
+## Architecture Overview
 
-Personalization considers:
-
-- **Portfolio concentration** — existing exposure to the stock
-
-- **Risk tolerance** — conservative, moderate, or aggressive
-
-- **Investment horizon** — short-term vs. long-term objectives
-
-- **Signal conflicts** — disagreement between agents automatically reduces confidence
-
-### Example
-\| | User A — Conservative | User B — Aggressive |
-
-\|---|---|---|
-
-\| Market View | 🟢 BULLISH (76%) | 🟢 BULLISH (76%) |
-
-\| Existing RELIANCE Exposure | 30% | 5% |
-
-\| Personalized Decision | 🟡 **SMALL ADD** | 🟢 **CONSIDER BUY** |
-
-\| Rationale | Concentration risk limits additional allocation | Lower exposure allows greater opportunity capture |
----
-## 🧠 Core Features
-- 🤖 **Multi-agent stock analysis** across technical, fundamental, and sentiment dimensions
-
-- ⚡ **Parallel agent execution** using `Promise.allSettled()`
-
-- 📰 **Sentiment intelligence** from news and earnings-call information
-
-- 📚 **RAG-enhanced fundamental analysis** with filing citations
-
-- 🎯 **Portfolio-aware personalization** based on exposure and risk profile
-
-- 🔀 **Signal conflict detection** with confidence dampening
-
-- 🔎 **Explainable AI** with agent traces, reasons, citations, and metadata
-
-- 📡 **Real-time SSE streaming** for live analysis progress
-
-- 📈 **Live market data** through the Upstox V3 ecosystem with Protobuf support
-
-- 🛡️ **Graceful degradation** when individual data or AI providers are unavailable
-
-- 🎨 **Modern financial dashboard** with glassmorphism and interactive 3D visualizations
-
-- 🧪 **Fault-injection demo controls** for testing missing data and conflicting signals
----
-## 🏗️ Architecture
-```text
-
-                         ┌─────────────────────┐
-
-                         │      User Query     │
-
-                         │  "Analyze RELIANCE" │
-
-                         └──────────┬──────────┘
-
-                                    │
-
-                                    ▼
-
-                         ┌─────────────────────┐
-
-                         │    Orchestrator     │
-
-                         └──────────┬──────────┘
-
-                                    │
-
-                  ┌─────────────────┼─────────────────┐
-
-                  │                 │                 │
-
-                  ▼                 ▼                 ▼
-
-           ┌────────────┐    ┌────────────┐    ┌────────────┐
-
-           │ Technical  │    │ Fundamental│    │ Sentiment  │
-
-           │   Agent    │    │   Agent    │    │   Agent    │
-
-           └─────┬──────┘    └─────┬──────┘    └─────┬──────┘
-
-                 │                 │                 │
-
-                 └─────────────────┼─────────────────┘
-
-                                   ▼
-
-                         ┌─────────────────────┐
-
-                         │   Synthesis Agent   │
-
-                         │ Consensus + Conflict│
-
-                         └──────────┬──────────┘
-
-                                    │
-
-                                    ▼
-
-                         ┌─────────────────────┐
-
-                         │ Risk & Personalizer │
-
-                         │ Portfolio + Profile│
-
-                         └──────────┬──────────┘
-
-                                    │
-
-                                    ▼
-
-                         ┌─────────────────────┐
-
-                         │ Recommendation      │
-
-                         │ Action + Reasons    │
-
-                         │ Sources + Traces    │
-
-                         └─────────────────────┘
-
+```mermaid
+flowchart TD
+    User["User / Trader"] -->|"Selects Stock & Persona"| Frontend["Next.js 16 Web Terminal<br/>(Port 3000)"]
+    Frontend -->|"REST & SSE /ws/market"| API["Express 5 API Gateway<br/>(Port 5000)"]
+    
+    subgraph MarketDataLayer ["Market Data Layer"]
+        Yahoo["Yahoo Finance Provider<br/>(Zero-Key Live Feed)"]
+        Upstox["Upstox V3 Provider<br/>(Protobuf Feed - Optional)"]
+        Registry["Symbol Registry<br/>(27+ Top NSE Instruments)"]
+        Yahoo --> Registry
+        Upstox --> Registry
+    end
+    
+    API --> Registry
+    API -->|"Trigger Analysis"| Orchestrator["Agent Orchestrator"]
+    
+    subgraph MultiAgentEngine ["Autonomous Multi-Agent Engine"]
+        Orchestrator -->|"Concurrent Execution"| TechAgent["Technical Agent<br/>(RSI, MACD, EMAs, Volume)"]
+        Orchestrator -->|"Concurrent Execution"| FundAgent["Fundamentals Agent<br/>(SEBI LODR RAG Citations)"]
+        Orchestrator -->|"Concurrent Execution"| SentAgent["Sentiment Agent<br/>(News & Narrative Tone)"]
+        
+        TechAgent --> Synthesis["Synthesis Agent<br/>(Conflict Detection & Consensus)"]
+        FundAgent --> Synthesis
+        SentAgent --> Synthesis
+    end
+    
+    subgraph PersonalizationLayer ["Personalization & Risk Engine"]
+        Synthesis --> Personalizer["Personalization Engine"]
+        Profile["User Persona<br/>(Conservative / Moderate / Radical)"] --> Personalizer
+        Portfolio["Portfolio Risk Analyzer<br/>(Concentration Cap Limits)"] --> Personalizer
+        Personalizer --> Output["Final Structured Recommendation<br/>(Action, Conviction, Citations, Traces)"]
+    end
+    
+    Output -->|"JSON / SSE Stream"| Frontend
 ```
 
-### Agent responsibilities
-\| Agent | Responsibility | Typical output |
-
-\|---|---|---|
-
-\| **Technical Agent** | Price action, RSI, MACD, moving averages, volume | Signal + confidence + reasons |
-
-\| **Fundamental Agent** | Filing retrieval, financial metrics, management guidance | Signal + citations |
-
-\| **Sentiment Agent** | News and earnings-call sentiment | Signal + sentiment rationale |
-
-\| **Risk Agent** | Portfolio concentration and profile-based risk | Risk score + allocation constraints |
-
-\| **Synthesis Agent** | Reconcile agent outputs and detect conflicts | Consensus + confidence |
-
-The first three analytical agents run concurrently. Risk and synthesis operate after the required upstream results are available.
 ---
-## 🛠️ Technology Stack
+
+## Core Value Proposition
+
+Traditional investment platforms broadcast identical buy and sell signals to every user regardless of risk capacity. FinsightAI decouples the objective **market consensus** from the **personalized directive**:
+
+$$\text{Identical Market Data} + \text{Divergent Investor Context} = \text{Differentiated Action}$$
+
+### Decision Comparison Matrix
+
+| Attribute | Conservative Persona | Moderate Persona | Radical / Aggressive Persona |
+| :--- | :--- | :--- | :--- |
+| **Primary Objective** | Capital preservation & margin of safety | Balanced growth & wealth accumulation | High growth & momentum alpha |
+| **Max Single-Stock Cap** | 10% of portfolio | 15% of portfolio | 25% of portfolio |
+| **Investment Horizon** | Long Term (3+ Years) | Medium Term (1-3 Years) | Short to Medium (<1 Year) |
+| **Market Consensus: Bullish** | Accumulate or Hold (limits drawdown) | Buy / Accumulate | Aggressive Buy |
+| **Rich Valuation Scenario** | Throttles to Hold with safety warning | Accumulate in tranches | Proceeds if momentum aligns |
+| **Signal Conflict Scenario** | Severe confidence dampening; Avoid | Reduces position sizing | Focuses on volume & catalyst breakout |
+
+---
+
+## Core Capabilities
+
+### 1. Autonomous Multi-Agent Analysis
+- **Technical Agent**: Computes 14-period RSI, MACD signal line crossovers, EMA alignment (20/50/200), and 20-day volume surge anomaly ratios.
+- **Fundamentals Agent**: Queries an in-memory vector database indexed with authentic SEBI LODR disclosures, corporate filings, and quarterly earnings transcripts to produce factual claims with verbatim citations.
+- **Sentiment Agent**: Analyzes news narratives, conference call transcripts, and corporate disclosures to derive qualitative market tone and catalyst impact.
+- **Parallel Orchestration**: Runs analytical agents concurrently using `Promise.allSettled()`, bounding latency to the slowest agent rather than their cumulative sum.
+
+### 2. Conflict Detection & Synthesis
+When agents disagree (e.g., technical breakout with rich valuation or negative news sentiment), the synthesis engine deterministically classifies conflict severity:
+- **None**: Unanimous alignment across dimensions.
+- **Mild**: Neutral stance on one dimension with bullish/bearish alignment on others.
+- **Sharp**: Direct divergence (e.g., Bullish Technicals vs. Bearish Fundamentals). Triggers automatic confidence dampening and conservative action overrides.
+
+### 3. Glass-Box Observability
+- **Verbatim Citations**: Every fundamental assertion links directly to source document excerpts, filing dates, and relevance scores.
+- **Trace Emitter**: Emits step-by-step lifecycle events over Server-Sent Events (SSE).
+- **Latency & Metadata Telemetry**: Tracks per-agent latency, LLM model versions, and token usage.
+
+### 4. Zero-Key Live NSE Market Engine
+- Ships with an out-of-the-box Yahoo Finance market provider requiring zero API keys or broker accounts.
+- Pre-configured for 27 top Indian equities and benchmark indices (`RELIANCE`, `TCS`, `HDFCBANK`, `INFY`, `NIFTY50`, `BANKNIFTY`, etc.).
+- Dynamically resolves and streams real-time quotes on demand for any valid ticker.
+- WebSocket broadcaster (`ws://localhost:5000/ws/market`) provides live sub-second price pushes to connected clients.
+
+---
+
+## Technology Stack
+
 ### Frontend
-- **Next.js 16**
-
-- **React 19**
-
-- **TypeScript**
-
-- **Tailwind CSS v4**
-
-- **Three.js**
-
-- **Framer Motion**
+- **Framework**: Next.js 16 (App Router)
+- **Library**: React 19
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS v4
+- **Icons**: Lucide React
+- **Animation & Visuals**: Framer Motion, Three.js
 
 ### Backend
-- **Node.js**
+- **Runtime**: Node.js (v18+)
+- **Framework**: Express 5
+- **Language**: TypeScript (`ts-node`)
+- **Real-Time Feeds**: WebSocket (`ws`) & Server-Sent Events (SSE)
+- **HTTP Client**: Axios
 
-- **Express.js 5**
+### AI & Data Engine
+- **Primary LLM**: Groq Cloud (`llama-3.3-70b-versatile`, `llama-3.1-8b-instant`, `openai/gpt-oss-120b`)
+- **Fallback LLM**: OpenAI API (`gpt-4o-mini`, `gpt-3.5-turbo`)
+- **Market Providers**: Zero-Key Yahoo Finance Engine (default) with optional Upstox V3 Protobuf provider
+- **Information Retrieval**: In-memory vector store with cosine similarity scoring for SEBI regulatory documents
 
-- **TypeScript**
-
-- **WebSocket (`ws`)**
-
-- **Axios**
-
-- **Server-Sent Events (SSE)**
-
-### AI & Data
-- **Groq** — preferred LLM provider
-
-- **OpenAI API** — fallback LLM provider
-
-- **Upstox V3** — market data
-
-- **Protobuf** — binary market-feed decoding
-
-- **Vector store** — filing retrieval for RAG
-
-- **News / earnings-call sources** — sentiment analysis
 ---
-## 📁 Project Structure
-```text
 
+## Repository Structure
+
+```text
 FinsightAI/
-
 ├── backend/
-
-│   ├── src/
-
-│   │   ├── server.ts
-
-│   │   ├── app.ts
-
-│   │   ├── market/
-
-│   │   │   ├── market.service.ts
-
-│   │   │   ├── market.controller.ts
-
-│   │   │   ├── market.routes.ts
-
-│   │   │   ├── market.data.ts
-
-│   │   │   ├── symbol-registry.ts
-
-│   │   │   ├── upstox.ts
-
-│   │   │   ├── types.ts
-
-│   │   │   ├── broadcaster/
-
-│   │   │   ├── providers/
-
-│   │   │   ├── proto/
-
-│   │   │   ├── storage/
-
-│   │   │   └── interfaces/
-
-│   │   └── ai/
-
-│   │       ├── ai.service.ts
-
-│   │       ├── ai.controller.ts
-
-│   │       ├── ai.routes.ts
-
-│   │       ├── agents/
-
-│   │       │   ├── base.agent.ts
-
-│   │       │   ├── technical.agent.ts
-
-│   │       │   ├── fundamentals.agent.ts
-
-│   │       │   └── sentiment.agent.ts
-
-│   │       ├── orchestration/
-
-│   │       │   ├── agent.orchestrator.ts
-
-│   │       │   └── trace.emitter.ts
-
-│   │       ├── synthesis/
-
-│   │       │   └── synthesis.agent.ts
-
-│   │       ├── rag/
-
-│   │       │   └── vector.store.ts
-
-│   │       ├── personalization/
-
-│   │       │   ├── personalization.engine.ts
-
-│   │       │   └── portfolio.analyzer.ts
-
-│   │       ├── recommendation/
-
-│   │       │   └── recommendation.engine.ts
-
-│   │       ├── llm/
-
-│   │       │   └── llm.client.ts
-
-│   │       └── types/
-
-│   ├── package.json
-
-│   ├── tsconfig.json
-
-│   ├── .env.example
-
-│   └── tests/
-
-│       └── ai-integration.test.ts
-
+│   ├── src/
+│   │   ├── server.ts                  # Application entrypoint & HTTP server
+│   │   ├── app.ts                     # Express app configuration & middleware
+│   │   ├── market/
+│   │   │   ├── market.service.ts      # Watchlist management & tick aggregation
+│   │   │   ├── market.controller.ts   # REST endpoints for quotes & technicals
+│   │   │   ├── market.routes.ts       # Express route definitions
+│   │   │   ├── market.data.ts         # In-memory equity metadata & filings
+│   │   │   ├── symbol-registry.ts     # 27+ NSE instrument definitions
+│   │   │   ├── upstox.ts              # Upstox client instantiation & fallback
+│   │   │   ├── types.ts               # Market quotes, OHLC, and depth types
+│   │   │   ├── broadcaster/           # WebSocket tick broadcast engine
+│   │   │   └── providers/
+│   │   │       ├── yahoo-finance.provider.ts # Zero-key live NSE data engine
+│   │   │       ├── upstox-market.provider.ts # Upstox API provider
+│   │   │       └── mock-market.provider.ts   # Resilient fallback provider
+│   │   └── ai/
+│   │       ├── ai.service.ts          # AI orchestration & recommendation cache
+│   │       ├── ai.controller.ts       # Analysis REST & SSE endpoints
+│   │       ├── ai.routes.ts           # AI route definitions
+│   │       ├── agents/                # Technical, Fundamentals, Sentiment agents
+│   │       ├── orchestration/         # Parallel runner & trace emitter
+│   │       ├── synthesis/             # Consensus scoring & conflict detector
+│   │       ├── rag/                   # Vector store & SEBI filings retrieval
+│   │       ├── personalization/       # Profile modulation & portfolio risk
+│   │       ├── recommendation/        # Recommendation engine & action assembler
+│   │       └── llm/                   # Groq & OpenAI client with robust parsing
+│   ├── package.json
+│   └── tsconfig.json
 │
-
-└── frontend/
-
-    ├── src/
-
-    │   ├── app/
-
-    │   ├── components/
-
-    │   │   ├── 3d/
-
-    │   │   ├── landing/
-
-    │   │   ├── dashboard/
-
-    │   │   ├── analysis/
-
-    │   │   ├── navigation/
-
-    │   │   ├── onboarding/
-
-    │   │   └── watchlist/
-
-    │   ├── services/
-
-    │   ├── types/
-
-    │   └── public/
-
-    ├── package.json
-
-    ├── tsconfig.json
-
-    ├── next.config.ts
-
-    ├── postcss.config.mjs
-
-    └── tailwind.config.ts
-
+├── frontend/
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── layout.tsx             # Root layout with UserProvider & fonts
+│   │   │   ├── page.tsx               # Landing page with live NSE pulse
+│   │   │   ├── login/
+│   │   │   │   └── page.tsx           # Passwordless login & persona setup
+│   │   │   ├── dashboard/
+│   │   │   │   └── page.tsx           # Stock Market App (Figma design template)
+│   │   │   └── analysis/
+│   │   │       └── page.tsx           # Dedicated on-demand AI Agent page
+│   │   ├── components/
+│   │   │   ├── navigation/            # Main navigation & symbol search modal
+│   │   │   ├── dashboard/             # Market summary chart, top stocks, news
+│   │   │   ├── analysis/              # Agent cards & gauge components
+│   │   │   └── watchlist/             # Watchlist table & cards
+│   │   ├── context/
+│   │   │   └── user-context.tsx       # User identity & persona state management
+│   │   └── services/
+│   │       └── api.service.ts         # Typed client for backend REST & WebSocket
+│   ├── package.json
+│   └── tsconfig.json
+│
+└── docs/                             # Architecture specifications & API tests
 ```
+
 ---
-## 🚀 Quick Start
+
+## Application Flow & User Experience
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Investor
+    participant Landing as Landing Page (/)
+    participant Login as Persona Login (/login)
+    participant Dash as Dashboard (/dashboard)
+    participant Analysis as AI Analysis (/analysis)
+    participant Backend as Backend API (:5000)
+
+    User->>Landing: Visit Platform
+    Landing->>Backend: GET /api/market/quotes (Live NSE Marquee)
+    User->>Login: Click "Launch Terminal"
+    User->>Login: Enter Username & Select Persona (Conservative/Moderate/Radical)
+    Login->>Dash: Redirect with Stored Persona
+    Dash->>Backend: GET /api/market/quotes (27 NSE Equities)
+    Dash->>Backend: WS Connect /ws/market (Sub-second Live Ticks)
+    User->>Dash: Review Market Summary Chart, Watchlist, News
+    User->>Dash: Click "Analyse" on Stock Row (e.g. RELIANCE)
+    Dash->>Analysis: Navigate to /analysis?symbol=RELIANCE
+    User->>Analysis: Click "Run Multi-Agent Analysis"
+    Analysis->>Backend: POST /api/ai/analyze { symbol: "RELIANCE", profileId: "conservative" }
+    Backend-->>Analysis: Return Structured Recommendation & Grounded Citations
+    Analysis-->>User: Display Glass-Box Agent Breakdown & Modulated Action
+```
+
+---
+
+## Quick Start Guide
+
 ### Prerequisites
-- Node.js **18+**
+- **Node.js**: Version 18.x or higher
+- **Package Manager**: npm or yarn
+- **API Keys (Optional)**: Groq API Key (recommended for live LLM inference). If absent, the system uses resilient deterministic fallback models.
 
-- npm
-
-- Upstox API credentials for live market data
-
-- Groq and/or OpenAI API credentials for LLM functionality
-
-> Demo/mock fallbacks are available when optional external providers are unavailable.
-
-### 1. Clone the repository
+### 1. Clone the Repository
 ```bash
-
-git clone \<your-repository-url>
-
+git clone https://github.com/HariAswath/FinsightAI.git
 cd FinsightAI
-
 ```
 
-### 2. Install backend dependencies
+### 2. Configure Backend
+Navigate to the `backend` directory and create an `.env` file:
 ```bash
-
 cd backend
-
 npm install
-
 ```
 
-### 3. Configure backend environment
 Create `backend/.env`:
-
 ```env
-
 PORT=5000
-
-UPSTOX_API_KEY=your_upstox_key_here
-
-GROQ_API_KEY=your_groq_key_here
-
+GROQ_API_KEY=your_groq_api_key_here
+# Optional fallbacks:
 OPENAI_API_KEY=your_openai_key_here
-
+UPSTOX_ACCESS_TOKEN=your_upstox_token_here
 ```
 
-### 4. Start the backend
+Start the backend development server:
 ```bash
-
 npm run dev
-
 ```
 
-The backend exposes:
+The backend starts with the Zero-Key Yahoo Finance provider active:
+- REST API: `http://localhost:5000`
+- Market Stream: `ws://localhost:5000/ws/market`
+- Health Check: `http://localhost:5000/health`
 
-```text
-
-REST API       http://localhost:5000
-
-Market API     http://localhost:5000/api/market
-
-AI API         http://localhost:5000/api/ai
-
-Market WS      ws://localhost:5000/ws/market
-
-```
-
-### 5. Install frontend dependencies
-Open another terminal:
-
+### 3. Configure Frontend
+Open a new terminal, navigate to the `frontend` directory, and install dependencies:
 ```bash
-
 cd frontend
-
 npm install
-
 ```
 
-### 6. Configure frontend environment
-Create `frontend/.env.local`:
-
+Create `frontend/.env.local` (optional, defaults to `http://localhost:5000`):
 ```env
-
 NEXT_PUBLIC_API_URL=http://localhost:5000
-
+NEXT_PUBLIC_WS_URL=ws://localhost:5000/ws/market
 ```
 
-### 7. Start the frontend
+Start the frontend development server:
 ```bash
-
 npm run dev
-
 ```
 
-Open:
+Open `http://localhost:3000` in your browser.
 
-```text
-
-http://localhost:3000
-
-```
 ---
-## 📡 API Reference
-### Market Data
-\| Method | Endpoint | Description |
 
-\|---|---|---|
+## API Reference
 
-\| `GET` | `/api/market/quotes` | Fetch cached symbol quotes |
+### Market Data Endpoints
 
-\| `GET` | `/api/market/:symbol` | Fetch comprehensive symbol data |
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/health` | Server health check and timestamp |
+| `GET` | `/api/market/quotes` | Retrieve live quotes for all 27 registered NSE instruments |
+| `GET` | `/api/market/:symbol` | Fetch live quote, technical metrics, and SEBI filings for a ticker |
+| `GET` | `/api/market/:symbol/technical` | Fetch technical indicators (RSI-14, MACD, EMAs, Bollinger Bands) |
+| `GET` | `/api/market/:symbol/filings` | Retrieve indexed SEBI regulatory disclosures and excerpts |
+| `WS` | `/ws/market` | WebSocket stream broadcasting tick-by-tick market price updates |
 
-\| `GET` | `/api/market/history/:symbol` | Fetch OHLC history |
+### AI Intelligence Endpoints
 
-\| `WS` | `/ws/market` | Stream live market updates |
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/ai/status` | Check AI engine status, active LLM provider, and registered agents |
+| `GET` | `/api/ai/profiles` | List preset risk profiles (Conservative, Moderate, Aggressive) |
+| `GET` | `/api/ai/portfolio/sample` | Retrieve sample portfolio holdings and concentration weights |
+| `POST` | `/api/ai/analyze` | Run on-demand multi-agent analysis (`{ symbol, profileId }`) |
+| `POST` | `/api/ai/compare-profiles` | Compare recommendation modulation across all 3 risk personas |
+| `GET` | `/api/ai/analyze/stream` | Stream real-time agent execution events using Server-Sent Events |
 
-### AI Analysis
-\| Method | Endpoint | Description |
+### Example Analysis Payload
 
-\|---|---|---|
-
-\| `POST` | `/api/ai/analyze` | Run the complete multi-agent pipeline |
-
-\| `GET` | `/api/ai/analyze/stream?symbol=RELIANCE` | Stream agent traces through SSE |
-
-\| `GET` | `/api/ai/compare-profiles?symbol=RELIANCE` | Compare decisions across profiles |
-
-\| `GET` | `/api/ai/profiles` | List available user profiles |
-
-\| `GET` | `/api/ai/sample-portfolio` | Retrieve sample portfolio context |
-
-\| `GET` | `/api/ai/status` | Check AI subsystem health and provider status |
-
-### Example analysis request
-```json
-
-{
-
-  "symbol": "RELIANCE",
-
-  "profileId": "conservative",
-
-  "simulateFailure": false
-
-}
-
-```
----
-## 🔄 Analysis Pipeline
-For a request such as:
-
-```text
-
-Analyze RELIANCE
-
-```
-
-FinsightAI follows this flow:
-
-1. **Retrieve market context**
-
-   - Price
-
-   - RSI
-
-   - MACD
-
-   - Moving averages
-
-   - Volume
-
-   - Historical information
-
-2. **Run specialized agents in parallel**
-
-   - Technical
-
-   - Fundamental
-
-   - Sentiment
-
-3. **Synthesize signals**
-
-   - Calculate consensus
-
-   - Detect disagreement
-
-   - Damp confidence when conflicts exist
-
-4. **Evaluate portfolio risk**
-
-   - Existing exposure
-
-   - Concentration score
-
-   - User risk profile
-
-   - Sector-related risk
-
-5. **Personalize the decision**
-
-   - Apply user-specific context after market synthesis
-
-6. **Assemble the recommendation**
-
-   - Action
-
-   - Confidence
-
-   - Explanation
-
-   - Sources
-
-   - Agent traces
-
-   - Performance metadata
-
-This architecture keeps the **market view consistent** while allowing the **final decision to adapt to the investor**.
----
-## 🔎 Explainability & Observability
-FinsightAI is designed as a **glass-box** system rather than a black box.
-
-The platform exposes:
-
-- Real-time agent execution traces
-
-- Per-agent latency
-
-- Agent confidence scores
-
-- Signal conflicts
-
-- RAG source citations
-
-- Reasoning steps
-
-- Recommendation metadata
-
-- Failure/degradation states
-
-The SSE endpoint can stream events such as:
-
-```text
-
-INIT
-
-TECHNICAL_AGENT_STARTED
-
-TECHNICAL_AGENT_COMPLETED
-
-FUNDAMENTAL_AGENT_STARTED
-
-FUNDAMENTAL_AGENT_COMPLETED
-
-SENTIMENT_AGENT_STARTED
-
-SENTIMENT_AGENT_COMPLETED
-
-SYNTHESIS_COMPLETED
-
-RECOMMENDATION
-
-DONE
-
-```
----
-## 🛡️ Fault Tolerance
-The system is designed to continue operating when individual components fail.
-
-### Missing sentiment/news data
-```text
-
-Sentiment unavailable
-
-        ↓
-
-Technical + Fundamental continue
-
-        ↓
-
-Overall confidence reduced
-
-        ↓
-
-Recommendation remains available
-
-```
-
-### Conflicting signals
-```text
-
-Technical → BULLISH
-
-Fundamental → BULLISH
-
-Sentiment → BEARISH
-
-        ↓
-
-Conflict detected
-
-        ↓
-
-Confidence dampened
-
-        ↓
-
-More conservative recommendation
-
-```
-
-### LLM provider failure
-The architecture supports a Groq/OpenAI provider abstraction and demo/mock fallback behavior when configured providers are unavailable.
----
-## 🎨 Frontend Experience
-The dashboard uses a dark, space-inspired financial interface with:
-
-- Glassmorphic cards
-
-- Cyan/blue accents
-
-- Amber highlights
-
-- Financial-data typography
-
-- Framer Motion transitions
-
-- Interactive 3D cards
-
-- WebGL agent-node visualization
-
-### Main views
-1. **Dashboard** — market summary, sector heatmap, and top stories
-
-2. **Analysis** — multi-agent results, synthesis, and explainability
-
-3. **Heatmap** — sector rotation visualization
-
-4. **Watchlist** — curated stocks and alerts
-
-5. **News Feed** — market intelligence and sentiment
-
-6. **Personalization** — risk-profile onboarding
----
-## 🧪 Hackathon Demo Flow
-The recommended demonstration is:
-
-### 1. Launch
-Open:
-
-```text
-
-http://localhost:3000
-
-```
-
-Show the landing page and interactive 3D experience.
-
-### 2. Explore the dashboard
-Review:
-
-- Market summary
-
-- Sector heatmap
-
-- Top stories
-
-- Stock selector
-
-### 3. Run multi-agent analysis
-Select:
-
-```text
-
-RELIANCE
-
-```
-
-Then run:
-
-```text
-
-Re-Run Multi-Agent Engine
-
-```
-
-Show the technical, fundamental, and sentiment agents executing.
-
-### 4. Demonstrate personalization
-Start with:
-
-```text
-
-User A — Conservative
-
-```
-
-Then switch to:
-
-```text
-
-User B — Aggressive
-
-```
-
-Demonstrate that the **market view remains the same**, while the personalized decision changes.
-
-### 5. Demonstrate explainability
-Open:
-
-- Fundamental Agent citations
-
-- Source snippets
-
-- "How did AI reach this decision?"
-
-- Agent trace timeline
-
-### 6. Demonstrate fault tolerance
-Use the demo controls to simulate:
-
-- Missing news data
-
-- Signal disagreement
-
-Show how the system reduces confidence and becomes more conservative.
-
-### 7. Show performance telemetry
-Highlight:
-
-- Total analysis latency
-
-- Individual agent latency
-
-- Confidence
-
-- Execution traces
----
-## 🧑‍💻 Development & Testing
-### Backend tests
 ```bash
+curl -X POST http://localhost:5000/api/ai/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"symbol": "RELIANCE", "profileId": "conservative"}'
+```
 
+---
+
+## Fault Tolerance & Graceful Degradation
+
+FinsightAI is engineered to maintain high availability under external service disruptions.
+
+```mermaid
+flowchart TD
+    Request["Incoming Analysis Request"] --> CheckLLM{"LLM Provider<br/>Available?"}
+    
+    CheckLLM -->|"Groq 200 OK"| GroqPipeline["Execute Groq Llama-3.3 Synthesis"]
+    CheckLLM -->|"Rate Limit / 404 / Offline"| FallbackLLM{"OpenAI Fallback<br/>Configured?"}
+    
+    FallbackLLM -->|"Yes"| OpenAIPipeline["Execute OpenAI Synthesis"]
+    FallbackLLM -->|"No"| Deterministic["Deterministic Rule-Based Synthesis Engine"]
+    
+    GroqPipeline --> CheckData{"Market Feed<br/>Available?"}
+    OpenAIPipeline --> CheckData
+    Deterministic --> CheckData
+    
+    CheckData -->|"Live Yahoo / Upstox"| FullData["Full Precision Calculation"]
+    CheckData -->|"Provider Timeout"| CachedData["Cached Quotes + Synthetic Anomaly Detection"]
+    
+    FullData --> Output["Deliver Verified Glass-Box Recommendation"]
+    CachedData --> Output
+```
+
+1. **LLM Resilience**: When Groq rate limits or fails, the engine falls back to secondary models, OpenAI, or the built-in deterministic rule engine. The user receives a valid recommendation with full transparency.
+2. **Market Feed Resilience**: If upstream market connections degrade, the engine serves cached tick values and flags data completeness in the response payload.
+3. **Response Caching**: A 30-second TTL cache in `AIService` prevents duplicate requests from exhausting API quotas.
+
+---
+
+## Testing & Verification
+
+### Backend Integration Tests
+Execute the end-to-end integration test suite to verify market providers, LLM clients, and agent orchestration:
+```bash
 cd backend
-
 npm run test:ai
-
 ```
 
-### Frontend production build
+### Frontend Production Build
+Validate static type safety and compilation across all Next.js App Router pages:
 ```bash
-
 cd frontend
-
 npm run build
-
-npm start
-
 ```
 
-### Frontend linting
-```bash
-
-cd frontend
-
-npm run lint
-
-```
 ---
-## 🔐 Environment Variables
-### Backend — `backend/.env`
-```env
 
-PORT=5000
+## License
 
-UPSTOX_API_KEY=xxx
-
-GROQ_API_KEY=xxx
-
-OPENAI_API_KEY=xxx
-
-```
-
-### Frontend — `frontend/.env.local`
-```env
-
-NEXT_PUBLIC_API_URL=http://localhost:5000
-
-```
-
-**Never commit real API keys or secrets to Git.**
----
-## 📊 Performance Model
-The first three analysis agents execute concurrently:
-
-```text
-
-Technical       \~1.2s
-
-Fundamental     \~1.8s
-
-Sentiment       \~1.4s
-
-                 │
-
-                 └── Parallel execution
-
-                     ≈ max(1.2, 1.8, 1.4)
-
-                     ≈ 1.8s
-
-```
-
-This avoids the full serial execution cost and allows the system to provide a faster analysis pipeline.
----
-## 🗺️ Roadmap
-- [ ] Persistent PostgreSQL storage for historical agent traces
-
-- [ ] Production-grade Upstox WebSocket + Protobuf integration
-
-- [ ] Institutional-grade RAG using LangChain/LlamaIndex
-
-- [ ] Portfolio optimization using Markowitz frontier analysis
-
-- [ ] Real-time concentration and signal-conflict alerts
-
-- [ ] React Native mobile application
-
-- [ ] Multi-asset support for crypto, forex, and commodities
----
-## 📚 Documentation
-Additional project documentation is available in:
-
-```text
-
-/docs
-
-```
-
-Related resources include:
-
-- Architecture specifications
-
-- Agent behavior documentation
-
-- API documentation
-
-- Swagger/OpenAPI documentation when enabled
----
-## 🤝 Contributing
-This project was built for **Hackverse 2026**.
-
-Contributions, bug reports, and feature suggestions are welcome.
-
-1. Fork the repository
-
-2. Create a feature branch
-
-3. Make your changes
-
-4. Run tests and linting
-
-5. Commit your changes
-
-6. Open a pull request
----
-## 📄 License
-This project is released under the **ISC License**.
-
-See [`LICENSE`]\(LICENSE) for details.
----
-## 👨‍💻 Author
-**Hari Aswath** — [@HariAswath]\(https://github.com/HariAswath)
----
-## 💬 Support
-For issues or questions:
-
-1. Check existing GitHub issues
-
-2. Review the `/docs` directory
-
-3. Open a new issue with detailed reproduction steps
----
-\<div align="center">
-
-### FinsightAI
-**Autonomous Financial Intelligence for Retail Investors**
-
-**From Market Data to Personalized Intelligence**
-
-\</div>
+This project is licensed under the [ISC License](LICENSE). See the [LICENSE](LICENSE) file for details.
