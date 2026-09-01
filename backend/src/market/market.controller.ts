@@ -18,6 +18,7 @@ export class MarketController {
       }
 
       const cleanSymbol = symbolParam.toUpperCase().trim();
+      await this.marketService.ensureSymbol(cleanSymbol);
       const comprehensive = this.marketService.getComprehensive(cleanSymbol);
       const quote = this.marketService.getQuote(cleanSymbol);
 
