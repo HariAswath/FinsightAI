@@ -26,9 +26,12 @@ async function bootstrap() {
 
   server.listen(PORT, () => {
     console.log(`====================================================`);
-    console.log(`🚀 FinsightAI Market Backend Server running on port ${PORT}`);
-    console.log(`📡 REST API: http://localhost:${PORT}/api/market/quotes`);
+    console.log(`🚀 FinsightAI Backend Server running on port ${PORT}`);
+    console.log(`📡 Market Quotes: http://localhost:${PORT}/api/market/quotes`);
     console.log(`📡 Single Symbol: http://localhost:${PORT}/api/market/RELIANCE`);
+    console.log(`🤖 AI Status:     http://localhost:${PORT}/api/ai/status`);
+    console.log(`🤖 AI Analyze:    POST http://localhost:${PORT}/api/ai/analyze`);
+    console.log(`🤖 AI SSE Stream: GET http://localhost:${PORT}/api/ai/analyze/stream?symbol=RELIANCE`);
     console.log(`⚡ WebSocket Stream: ws://localhost:${PORT}/ws/market`);
     console.log(`====================================================`);
   });

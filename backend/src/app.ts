@@ -1,6 +1,7 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { marketRouter } from './market/market.routes';
+import { aiRouter } from './ai/ai.routes';
 
 export function createApp(): Express {
   const app = express();
@@ -19,6 +20,9 @@ export function createApp(): Express {
 
   // Market Routes
   app.use('/api/market', marketRouter);
+
+  // AI Multi-Agent Routes
+  app.use('/api/ai', aiRouter);
 
   // Fallback 404
   app.use((req: Request, res: Response) => {
