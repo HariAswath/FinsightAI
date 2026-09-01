@@ -135,14 +135,23 @@ export interface FinalRecommendation {
     };
   };
   personalization: {
-    appliedProfile: {
-      riskTolerance: 'CONSERVATIVE' | 'MODERATE' | 'AGGRESSIVE';
-      horizon: 'SHORT_TERM' | 'MEDIUM_TERM' | 'LONG_TERM';
-      maxStockConcentrationPct: number;
+    profile?: {
+      id?: string;
+      name?: string;
+      riskTolerance?: string;
+      horizon?: string;
+      maxStockConcentrationPct?: number;
+      description?: string;
     };
-    actionModulationReasoning: string;
-    originalSynthesisSignal: string;
-    adjustedAction: string;
+    appliedProfile?: {
+      riskTolerance?: string;
+      horizon?: string;
+      maxStockConcentrationPct?: number;
+    };
+    rawSignal?: string;
+    adjustedAction?: string;
+    impactExplanation?: string;
+    actionModulationReasoning?: string;
   };
   portfolioRisk: {
     currentHoldingWeightPct: number;
@@ -186,7 +195,7 @@ export class ApiService {
       throw new Error(err.message || `Analysis failed: ${res.statusText}`);
     }
     const json = await res.json();
-    return json.recommendation;
+    return json.recommendation || json;
   }
 
   public static connectMarketWS(
